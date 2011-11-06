@@ -2,6 +2,8 @@
 
 make clean all
 
+mkdir -p out/
+
 ./extract_images $1 $2
 
 cd out/
