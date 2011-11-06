@@ -14,12 +14,12 @@
 
 #include "openssl/sha.h"
 
-GHashTable *response_buffers = NULL;
-GHashTable *jpegs = NULL;
 
 #define OUTPUT_DIR "out/"
 #define DEFAULT_IMAGE_BUFLEN 60000
 #define MAX_IMAGE_SIZE 150000
+
+#define HASH_ADDR(a) GUINT_TO_POINTER(hash_addr(&a))
 
 #define int_ntoa(x)	inet_ntoa(*((struct in_addr *)&x))
 
@@ -29,10 +29,10 @@ static const char http_get_image[] =
 
 static const char jpeg_start_magic[] = { 0xFF, 0xD8 };
 static const char jpeg_end_magic[] = { 0xFF, 0xD9 };
-
 static guint nimages = 0, nignored = 0, nduplicates = 0;
 
-#define HASH_ADDR(a) GUINT_TO_POINTER(hash_addr(&a))
+GHashTable *response_buffers = NULL;
+GHashTable *jpegs = NULL;
 
 void
 g_string_freex(gpointer str)
@@ -97,8 +97,10 @@ process_partial_http_request(struct tcp_stream *tcp)
     if (s->offset == 0 && check_image_request(s->data, s->count)) {
         GString *buffer = g_string_sized_new(DEFAULT_IMAGE_BUFLEN);
         g_hash_table_insert(response_buffers, HASH_ADDR(tcp->addr), buffer);
+#if 0
         g_message("Found image request from %s to %s\n",
                   int_ntoa(tcp->addr.saddr), int_ntoa(tcp->addr.daddr));
+#endif
     }
     s->collect--;
 }
@@ -113,7 +115,7 @@ process_partial_http_response(struct tcp_stream *tcp)
     if (buffer == NULL) {
         return;
     }
-    buffer = g_string_append_len(buffer, c->data, c->count_new);
+    g_string_append_len(buffer, c->data, c->count_new);
 }
 
 void
